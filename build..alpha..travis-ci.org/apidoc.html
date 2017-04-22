@@ -1,0 +1,280 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="https://github.com/felixge/node-stack-trace"
+
+    >stack-trace (v0.0.9)</a>
+</h1>
+<h4>Get v8 stack traces as an array of CallSite objects.</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.stack-trace">module stack-trace</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.stack-trace._createParsedCallSite">
+            function <span class="apidocSignatureSpan">stack-trace.</span>_createParsedCallSite
+            <span class="apidocSignatureSpan">(properties)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.stack-trace.get">
+            function <span class="apidocSignatureSpan">stack-trace.</span>get
+            <span class="apidocSignatureSpan">(belowFn)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.stack-trace.parse">
+            function <span class="apidocSignatureSpan">stack-trace.</span>parse
+            <span class="apidocSignatureSpan">(err)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.stack-trace" id="apidoc.module.stack-trace">module stack-trace</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.stack-trace._createParsedCallSite" id="apidoc.element.stack-trace._createParsedCallSite">
+        function <span class="apidocSignatureSpan">stack-trace.</span>_createParsedCallSite
+        <span class="apidocSignatureSpan">(properties)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">_createParsedCallSite = function (properties) {
+  var methods = {};
+  for (var property in properties) {
+    var prefix = &#x27;get&#x27;;
+    if (property === &#x27;native&#x27;) {
+      prefix = &#x27;is&#x27;;
+    }
+    var method = prefix + property.substr(0, 1).toUpperCase() + property.substr(1);
+
+    (function(property) {
+      methods[method] = function() {
+        return properties[property];
+      }
+    })(property);
+  }
+
+  var callSite = Object.create(methods);
+  for (var property in properties) {
+    callSite[property] = properties[property];
+  }
+
+  return callSite;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.stack-trace.get" id="apidoc.element.stack-trace.get">
+        function <span class="apidocSignatureSpan">stack-trace.</span>get
+        <span class="apidocSignatureSpan">(belowFn)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">get = function (belowFn) {
+  var oldLimit = Error.stackTraceLimit;
+  Error.stackTraceLimit = Infinity;
+
+  var dummyObject = {};
+
+  var v8Handler = Error.prepareStackTrace;
+  Error.prepareStackTrace = function(dummyObject, v8StackTrace) {
+    return v8StackTrace;
+  };
+  Error.captureStackTrace(dummyObject, belowFn || exports.get);
+
+  var v8StackTrace = dummyObject.stack;
+  Error.prepareStackTrace = v8Handler;
+  Error.stackTraceLimit = oldLimit;
+
+  return v8StackTrace;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+## Usage
+
+The stack-trace module makes it easy for you to capture the current stack:
+
+``` javascript
+var stackTrace = require(&#x27;stack-trace&#x27;);
+var trace = stackTrace.<span class="apidocCodeKeywordSpan">get</span>();
+
+require(&#x27;assert&#x27;).strictEqual(trace[0].getFileName(), __filename);
+```
+
+However, sometimes you have already popped the stack you are interested in,
+and all you have left is an `Error` object. This module can help:
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.stack-trace.parse" id="apidoc.element.stack-trace.parse">
+        function <span class="apidocSignatureSpan">stack-trace.</span>parse
+        <span class="apidocSignatureSpan">(err)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">parse = function (err) {
+  if (!err.stack) {
+    return [];
+  }
+
+  var self = this;
+  var lines = err.stack.split(&#x27;\n&#x27;).slice(1);
+
+  return lines
+    .map(function(line) {
+      if (line.match(/^\s*[-]{4,}$/)) {
+        return self._createParsedCallSite({
+          fileName: line,
+          lineNumber: null,
+          functionName: null,
+          typeName: null,
+          methodName: null,
+          columnNumber: null,
+          &#x27;native&#x27;: null,
+        });
+      }
+
+      var lineMatch = line.match(/at (?:(.+)\s+)?\(?(?:(.+?):(\d+):(\d+)|([^)]+))\)?/);
+      if (!lineMatch) {
+        return;
+      }
+
+      var object = null;
+      var method = null;
+      var functionName = null;
+      var typeName = null;
+      var methodName = null;
+      var isNative = (lineMatch[5] === &#x27;native&#x27;);
+
+      if (lineMatch[1]) {
+        var methodMatch = lineMatch[1].match(/([^\.]+)(?:\.(.+))?/);
+        object = methodMatch[1];
+        method = methodMatch[2];
+        functionName = lineMatch[1];
+        typeName = &#x27;Object&#x27;;
+      }
+
+      if (method) {
+        typeName = object;
+        methodName = method;
+      }
+
+      if (method === &#x27;&#x3c;anonymous&#x3e;&#x27;) {
+        methodName = null;
+        functionName = &#x27;&#x27;;
+      }
+
+      var properties = {
+        fileName: lineMatch[2] || null,
+        lineNumber: parseInt(lineMatch[3], 10) || null,
+        functionName: functionName,
+        typeName: typeName,
+        methodName: methodName,
+        columnNumber: parseInt(lineMatch[4], 10) || null,
+        &#x27;native&#x27;: isNative,
+      };
+
+      return self._createParsedCallSite(properties);
+    })
+    .filter(function(callSite) {
+      return !!callSite;
+    });
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+However, sometimes you have already popped the stack you are interested in,
+and all you have left is an `Error` object. This module can help:
+
+``` javascript
+var stackTrace = require(&#x27;stack-trace&#x27;);
+var err = new Error(&#x27;something went wrong&#x27;);
+var trace = stackTrace.<span class="apidocCodeKeywordSpan">parse</span>(err);
+
+require(&#x27;assert&#x27;).strictEqual(trace[0].getFileName(), __filename);
+```
+
+Please note that parsing the `Error#stack` property is not perfect, only
+certain properties can be retrieved with it as noted in the API docs below.
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
